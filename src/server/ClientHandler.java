@@ -13,7 +13,6 @@ public class ClientHandler {
 
     private String nick;
     private String login;
-
     public ClientHandler(Server server, Socket socket) {
         try {
             this.server = server;
@@ -23,7 +22,6 @@ public class ClientHandler {
 
             new Thread(() -> {
                 try {
-                    //цикл аутентификации
                     while (true) {
                         String str = in.readUTF();
 
@@ -49,7 +47,6 @@ public class ClientHandler {
 
                         server.broadcastMsg(str);
                     }
-                    //цикл работы
                     while (true) {
                         String str = in.readUTF();
 
@@ -58,7 +55,16 @@ public class ClientHandler {
                             break;
                         }
 
-                        server.broadcastMsg(str);
+                        String[] offer = str.split(" ",3);
+                        String keyWord = offer[0];
+                        if (keyWord.equalsIgnoreCase("/w")) {
+                            privateMsg(ClientHandler.this,offer[1],offer[2] );
+                            out.writeUTF(str);
+                        }
+                        else {
+                            server.broadcastMsg(str);
+                        }
+
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -79,12 +85,18 @@ public class ClientHandler {
                 }
             }).start();
 
-
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
 
+    public void privateMsg(ClientHandler str, String name, String text) {
 
+        for (ClientHandler client: server.clients) {
+            if(client.getNick().equals(name)) {
+                client.sendMsg("Персональное сообщение от " + str.getNick() + " : " + text);
+            }
+        }
     }
 
     void sendMsg(String str) {
@@ -96,6 +108,6 @@ public class ClientHandler {
     }
 
     public String getNick() {
-        return nick;
+        return this.nick;
     }
 }
